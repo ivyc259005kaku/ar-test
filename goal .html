@@ -34,6 +34,10 @@
   .staff .msg { font-size:12px; margin-top:6px; min-height:16px; }
   .note { margin-top:14px; font-size:11px; opacity:.75; line-height:1.7; text-align:center; }
   a.back { display:block; text-align:center; margin-top:14px; color:#fff; font-size:13px; }
+  .wrap { padding-bottom: 110px; }
+  #camBar { position:fixed; left:0; right:0; bottom:0; z-index:10; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(transparent, #0b4a8f 35%); }
+  #camBtn { display:block; width:100%; max-width:460px; margin:0 auto; background:#ffd66b; color:#0b2037; border:none; border-radius:30px; font-weight:900; font-size:18px; padding:15px; text-align:center; text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,.35); }
+  .nextHint { margin-top:10px; text-align:center; font-size:13px; font-weight:800; color:#ffd66b; }
 </style>
 </head>
 <body>
@@ -63,8 +67,8 @@
   </details>
 
   <div class="note">景品は、この画面を係の人に見せてください。<br>画面のスクリーンショットでは受け付けません。</div>
-  <a class="back" href="javascript:history.back()">← もどる</a>
-</div>
+  </div>
+<div id="camBar"><a id="camBtn" href="./index.html">📷 マーカーを読みに行く</a></div>
 
 <script>
 // ===== 設定(本番前に変更してください) =====
@@ -119,6 +123,14 @@ document.getElementById('recvBtn').addEventListener('click', ()=>{
   try { localStorage.setItem('ivyArStampReceived', String(Date.now())); } catch(e){}
   m.textContent = '受け取り済みにしました'; showReceived();
 });
+if (/[?&]embed=1/.test(location.search)){
+  document.getElementById('camBtn').addEventListener('click', e=>{ e.preventDefault(); parent.postMessage({type:'close'}, '*'); });
+}
+if (done < 9){
+  const rest = SPOTS.filter(s=>!cleared[s[0]]).map(s=>s[1]+s[2]).join(' ・ ');
+  const n = document.createElement('div'); n.className='nextHint'; n.textContent = '未クリア: ' + rest;
+  document.querySelector('.card').appendChild(n);
+}
 </script>
 </body>
 </html>

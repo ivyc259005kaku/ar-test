@@ -93,16 +93,6 @@ window.addEventListener('message', e=>{
   else if (d.type === 'cleared') refreshBar();
 });
 document.getElementById('goalBtn').addEventListener('click', ()=> show('./goal.html?embed=1', true));
-// goal.html の「もどる」代わり: 画面タップで閉じられるよう、ゴール表示中は下部に戻るボタン
-frame.addEventListener('load', ()=>{
-  if (!frame.className) return;
-  try {
-    const d = frame.contentDocument; const b = d.createElement('button');
-    b.textContent = '📷 カメラにもどる'; b.style.cssText = 'display:block;margin:18px auto 30px;background:#ffd66b;color:#0b2037;border:none;border-radius:24px;font-weight:800;font-size:15px;padding:12px 28px';
-    b.onclick = closeFrame; d.querySelector('.wrap').appendChild(b);
-  } catch(e){}
-});
-
 document.getElementById('goBtn').addEventListener('click', async ()=>{
   document.getElementById('goBtn').disabled = true;
   try {
