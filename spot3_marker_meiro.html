@@ -88,7 +88,7 @@
   </div>
 </div>
 <div id="resultBadge"><div class="badge" id="resultText"></div></div>
-<div id="clearScreen"><div class="stamp">🧩</div><h2>正解!</h2><p id="clearText"></p><div class="score" id="scoreText"></div></div>
+<div id="clearScreen"><div class="stamp">🧩</div><h2>正解!</h2><p id="clearText"></p><div class="score" id="scoreText"></div><a href="./goal.html" style="margin-top:16px;display:inline-block;background:#fff;color:#0b4a8f;font-weight:800;font-size:15px;padding:12px 28px;border-radius:26px;text-decoration:none">📒 スタンプ帳を見る</a></div>
 
 <script>
 const STORE_KEY = 'ivyArStampMistakes';
@@ -96,12 +96,17 @@ const SPOT_KEY = 'spot3';
 let memStore = {};
 function loadStore(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : {}; } catch(e){ return memStore; } }
 function saveStore(o){ memStore = o; try { localStorage.setItem(STORE_KEY, JSON.stringify(o)); } catch(e){} }
-if (/[?&]reset=1/.test(location.search)){ try { localStorage.removeItem(STORE_KEY); } catch(e){} memStore = {}; }
+if (/[?&]reset=1/.test(location.search)){ try { localStorage.removeItem(STORE_KEY); localStorage.removeItem('ivyArStampCleared'); localStorage.removeItem('ivyArStampStart'); localStorage.removeItem('ivyArStampReceived'); } catch(e){} memStore = {}; }
 function spotMistakes(){ return Number(loadStore()[SPOT_KEY]) || 0; }
 function totalMistakes(){ return Object.values(loadStore()).reduce((a,b)=> a + (Number(b)||0), 0); }
 function addMistake(){ const s = loadStore(); s[SPOT_KEY] = (Number(s[SPOT_KEY]) || 0) + 1; saveStore(s); updateBadge(); }
 function updateBadge(){ document.getElementById('mistakeBadge').textContent = 'まちがい 合計 ' + totalMistakes() + '回'; }
 updateBadge();
+
+// ---- スタンプ記録(ゴール画面で使う) ----
+const CLEAR_KEY = 'ivyArStampCleared', START_KEY = 'ivyArStampStart';
+try { if (!localStorage.getItem(START_KEY)) localStorage.setItem(START_KEY, String(Date.now())); } catch(e){}
+function markCleared(){ try { const o = JSON.parse(localStorage.getItem(CLEAR_KEY) || '{}'); if (!o[SPOT_KEY]) o[SPOT_KEY] = Date.now(); localStorage.setItem(CLEAR_KEY, JSON.stringify(o)); } catch(e){} }
 
 // 迷路: # = 壁, . = 通路
 const MAP = [
@@ -196,6 +201,7 @@ CHOICES.forEach(v=>{
   choicesEl.appendChild(b);
 });
 function showClear(){
+  markCleared();
   clearText.innerHTML = 'D→C、B→A、E→D と、1文字ずつずらして並べると「CAD」。<br>文字を一定のルールでずらす暗号を「シーザー暗号」といいます。<br>CADは、設計に使うソフトの名前(Computer Aided Design)です。';
   scoreText.textContent = 'このスポットのまちがい ' + spotMistakes() + '回 / 合計 ' + totalMistakes() + '回';
   clearScreen.classList.add('show');

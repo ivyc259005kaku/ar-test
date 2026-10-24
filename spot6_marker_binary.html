@@ -94,7 +94,7 @@
   <div class="note">① 右から、<b>1・2・4・8</b> と2倍ずつ増える「重み」を書く。<br>② 「1」になっている桁の重みだけを足す。<br><b>8 + 0 + 2 + 1 = 11</b><br>※ 桁が3つなら、重みは 4・2・1 です。</div>
   <button class="close" id="exClose">とじる</button>
 </div></div>
-<div id="clearScreen"><div class="stamp">💾</div><h2>正解!</h2><p id="clearText"></p><div class="score" id="scoreText"></div></div>
+<div id="clearScreen"><div class="stamp">💾</div><h2>正解!</h2><p id="clearText"></p><div class="score" id="scoreText"></div><a href="./goal.html" style="margin-top:16px;display:inline-block;background:#fff;color:#0b4a8f;font-weight:800;font-size:15px;padding:12px 28px;border-radius:26px;text-decoration:none">📒 スタンプ帳を見る</a></div>
 
 <script>
 const STORE_KEY = 'ivyArStampMistakes';
@@ -102,12 +102,17 @@ const SPOT_KEY = 'spot6';
 let memStore = {};
 function loadStore(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : {}; } catch(e){ return memStore; } }
 function saveStore(o){ memStore = o; try { localStorage.setItem(STORE_KEY, JSON.stringify(o)); } catch(e){} }
-if (/[?&]reset=1/.test(location.search)){ try { localStorage.removeItem(STORE_KEY); } catch(e){} memStore = {}; }
+if (/[?&]reset=1/.test(location.search)){ try { localStorage.removeItem(STORE_KEY); localStorage.removeItem('ivyArStampCleared'); localStorage.removeItem('ivyArStampStart'); localStorage.removeItem('ivyArStampReceived'); } catch(e){} memStore = {}; }
 function spotMistakes(){ return Number(loadStore()[SPOT_KEY]) || 0; }
 function totalMistakes(){ return Object.values(loadStore()).reduce((a,b)=> a + (Number(b)||0), 0); }
 function addMistake(){ const s = loadStore(); s[SPOT_KEY] = (Number(s[SPOT_KEY]) || 0) + 1; saveStore(s); updateBadge(); }
 function updateBadge(){ document.getElementById('mistakeBadge').textContent = 'まちがい 合計 ' + totalMistakes() + '回'; }
 updateBadge();
+
+// ---- スタンプ記録(ゴール画面で使う) ----
+const CLEAR_KEY = 'ivyArStampCleared', START_KEY = 'ivyArStampStart';
+try { if (!localStorage.getItem(START_KEY)) localStorage.setItem(START_KEY, String(Date.now())); } catch(e){}
+function markCleared(){ try { const o = JSON.parse(localStorage.getItem(CLEAR_KEY) || '{}'); if (!o[SPOT_KEY]) o[SPOT_KEY] = Date.now(); localStorage.setItem(CLEAR_KEY, JSON.stringify(o)); } catch(e){} }
 
 // カード(2進数) と 正しい枠(10進数)
 const CARDS = [ {id:'c2', bin:'10', slot:0}, {id:'c3', bin:'11', slot:1}, {id:'c4', bin:'100', slot:2}, {id:'c5', bin:'101', slot:3} ];
@@ -186,6 +191,7 @@ checkBtn.addEventListener('click', ()=>{
   setResult('いま '+correct+'枚 合っています(このスポットのまちがい '+spotMistakes()+'回)');
 });
 function showClear(){
+  markCleared();
   clearText.innerHTML='10 = 2、11 = 2+1 = 3、100 = 4、101 = 4+1 = 5。<br>2進数は、右から 1・2・4・8… と、2倍ずつ大きくなる位で数えます。<br>桁が1つ増えるたびに、2倍になります。';
   scoreText.textContent='このスポットのまちがい '+spotMistakes()+'回 / 合計 '+totalMistakes()+'回';
   clearScreen.classList.add('show');
