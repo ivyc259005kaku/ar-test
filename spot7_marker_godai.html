@@ -28,7 +28,7 @@
   .card { position:absolute; border-radius:14px; background:rgba(255,255,255,0.97); display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 6px 16px rgba(0,0,0,0.4); touch-action:none; z-index:35; pointer-events:auto; cursor:grab; }
   .card .icon { font-size:26px; line-height:1.1; pointer-events:none; }
   .card .name { font-size:12px; font-weight:800; color:#1f2a3a; margin-top:2px; pointer-events:none; }
-  #resultBadge { position:fixed; bottom:84px; left:0; width:100%; z-index:31; text-align:center; pointer-events:none; display:none; }
+  #resultBadge { position:fixed; bottom:calc(max(20px, env(safe-area-inset-bottom)) + 112px); left:0; width:100%; z-index:31; text-align:center; pointer-events:none; display:none; }
   #resultBadge .badge { display:inline-block; background: rgba(0,0,0,0.6); border:2px solid rgba(255,255,255,0.65); border-radius:22px; padding:8px 18px; font-size:14px; font-weight:700; color:#fff; backdrop-filter: blur(6px); }
   #checkBtn { position:fixed; bottom:max(20px, env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); z-index:33; display:none; background:#fff; color:#0b4a8f; border:none; border-radius:30px; padding:14px 40px; font-size:16px; font-weight:800; box-shadow:0 6px 18px rgba(0,0,0,0.35); pointer-events:auto; }
   #clearScreen { position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(11, 74, 143, 0.94); z-index:40; display:none; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:26px; backdrop-filter: blur(4px); pointer-events:auto; }
@@ -50,6 +50,19 @@
   }
   #rotateMsg { position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; background:#0b4a8f; color:#fff; font-size:18px; font-weight:800; text-align:center; padding:20px; line-height:1.8; }
   @media (orientation:landscape) and (max-height:500px) { #rotateMsg { display:flex; } }
+  #exBtn { position:fixed; bottom:calc(max(20px, env(safe-area-inset-bottom)) + 64px); left:50%; transform:translateX(-50%); z-index:33; display:none; background:#ffd66b; color:#0b2037; border:none; border-radius:24px; padding:9px 22px; font-size:14px; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,.35); pointer-events:auto; }
+  #exModal { position:fixed; inset:0; z-index:45; background:rgba(11,35,64,.92); display:none; align-items:center; justify-content:center; padding:18px; pointer-events:auto; }
+  #exModal.show { display:flex; }
+  #exModal .card2 { background:#fff; color:#1f2a3a; border-radius:16px; padding:16px 14px; width:100%; max-width:400px; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+  #exModal h3 { font-size:16px; color:#0b4a8f; margin-bottom:8px; }
+  #exModal table { width:100%; border-collapse:collapse; text-align:center; font-size:18px; font-weight:800; margin:8px 0; }
+  #exModal th { font-size:11px; font-weight:700; text-align:left; width:30%; color:#38506b; padding:6px 4px; }
+  #exModal td { padding:7px 2px; }
+  #exModal tr.bin td { background:#dbe7f5; font-family:Consolas,Menlo,monospace; } #exModal tr.w td { background:#e3f3e6; } #exModal tr.res td { background:#fff6c8; }
+  #exModal .note { font-size:13px; font-weight:600; line-height:1.7; margin-top:6px; }
+  #exModal .close { display:block; margin:12px auto 0; background:#0b4a8f; color:#fff; border:none; border-radius:24px; padding:10px 32px; font-size:15px; font-weight:800; }
+  #exModal .pos { background:#eef4fb; border-radius:10px; padding:8px 10px; font-size:13px; font-weight:700; line-height:1.75; margin-top:6px; }
+  #exModal svg { width:100%; max-width:300px; display:block; margin:6px auto; }
 </style>
 </head>
 <body>
@@ -77,6 +90,19 @@
 </div>
 <div id="resultBadge"><div class="badge" id="resultText"></div></div>
 <button id="checkBtn">これで決定</button>
+<button id="exBtn">💡 ヒントを見る</button>
+<div id="exModal"><div class="card2">
+  <h3>ヒント: 置き場所はこうなります</h3>
+  <svg viewBox="0 0 300 190">
+    <rect x="105" y="6" width="90" height="38" rx="8" fill="#ffd66b" stroke="#b58a00" stroke-width="2"/><text x="150" y="30" font-size="13" font-weight="800" text-anchor="middle" fill="#0b2037">制御装置</text>
+    <rect x="75" y="68" width="90" height="38" rx="8" fill="#9fe0b4" stroke="#2f8f55" stroke-width="2"/><text x="120" y="92" font-size="13" font-weight="800" text-anchor="middle" fill="#0b2037">演算装置</text>
+    <rect x="8" y="140" width="84" height="38" rx="8" fill="#7fc0ff" stroke="#1d6fb8" stroke-width="2"/><text x="50" y="164" font-size="13" font-weight="800" text-anchor="middle" fill="#0b2037">入力装置</text>
+    <rect x="108" y="140" width="84" height="38" rx="8" fill="#ffb38f" stroke="#c0643a" stroke-width="2"/><text x="150" y="164" font-size="13" font-weight="800" text-anchor="middle" fill="#0b2037">記憶装置</text>
+    <rect x="208" y="140" width="84" height="38" rx="8" fill="#d7b8ff" stroke="#7a52b8" stroke-width="2"/><text x="250" y="164" font-size="13" font-weight="800" text-anchor="middle" fill="#0b2037">出力装置</text>
+  </svg>
+  <div class="pos">① <b>制御装置</b>は、いちばん上。<br>② <b>演算装置</b>は、制御装置のすぐ下。<br>③ 下の段は、<b>左から 入力装置 → 記憶装置 → 出力装置</b> の順。<br>(データは 入力 → 記憶 → 出力 と流れます)</div>
+  <button class="close" id="exClose">とじる</button>
+</div></div>
 <div id="clearScreen"><div class="stamp">🖥️</div><h2>正解!</h2><p id="clearText"></p><div class="score" id="scoreText"></div></div>
 
 <script>
@@ -215,10 +241,12 @@ function showClear(){
   scoreText.textContent='このスポットのまちがい '+spotMistakes()+'回 / 合計 '+totalMistakes()+'回';
   clearScreen.classList.add('show');
 }
+document.getElementById('exBtn').addEventListener('click', ()=> document.getElementById('exModal').classList.add('show'));
+document.getElementById('exClose').addEventListener('click', ()=> document.getElementById('exModal').classList.remove('show'));
 window.addEventListener('resize', ()=>{ if(gameStarted) layout(); });
 targetEntity.addEventListener('targetFound', ()=>{
   searchHint.style.display='none';
-  if(!gameStarted){ gameStarted=true; gameLayer.style.display='block'; clueBox.style.display='block'; checkBtn.style.display='block'; buildGame(); layout(); }
+  if(!gameStarted){ gameStarted=true; gameLayer.style.display='block'; clueBox.style.display='block'; checkBtn.style.display='block'; document.getElementById('exBtn').style.display='block'; buildGame(); layout(); }
 });
 targetEntity.addEventListener('targetLost', ()=>{ if(!gameStarted) searchHint.style.display='block'; });
 </script>
