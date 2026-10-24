@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>スポット9 マーカーAR 間違い探し</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
+  html, body { width:100%; height:100%; overflow:hidden; background: transparent !important;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif; }
+  a-scene { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; background: transparent !important; }
+  video { position: fixed !important; top:0 !important; left:0 !important; width:100% !important; height:100% !important; object-fit: cover !important; z-index:-1 !important; }
+  #ui { position:fixed; top:0; left:0; width:100%; z-index:20; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); background: linear-gradient(rgba(0,0,0,0.65), transparent); color:#fff; pointer-events:none; }
+  #ui h1 { font-size:14px; font-weight:700; } #ui p { font-size:12px; opacity:0.85; margin-top:2px; }
+  #mistakeBadge { position:fixed; top:max(10px, env(safe-area-inset-top)); right:12px; z-index:21; background:rgba(0,0,0,0.55); color:#fff; border:2px solid rgba(255,255,255,0.6); border-radius:18px; padding:5px 12px; font-size:12px; font-weight:700; pointer-events:none; backdrop-filter: blur(4px); }
+  #searchHint { position:fixed; bottom:0; left:0; width:100%; z-index:20; padding: 22px; padding-bottom: max(26px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(0,0,0,0.65)); color:#fff; text-align:center; pointer-events:none; }
+  #searchHint .badge { display:inline-block; background: rgba(0,0,0,0.4); border:2px solid rgba(255,255,255,0.6); border-radius:24px; padding:10px 22px; font-size:16px; font-weight:600; backdrop-filter: blur(6px); }
+  #gameLayer { position:fixed; top:0; left:0; width:100%; height:100%; z-index:30; display:none; pointer-events:none; }
+  #panel { position:absolute; top:max(54px, calc(env(safe-area-inset-top) + 44px)); left:50%; transform:translateX(-50%); width:92%; max-width:440px; pointer-events:none; }
+  .box { background:rgba(255,255,255,0.95); color:#1f2a3a; border-radius:14px; padding:10px 13px; box-shadow:0 6px 20px rgba(0,0,0,0.3); }
+  #qBox .q { font-size:13.5px; font-weight:800; line-height:1.65; } #qBox .q b { color:#0b4a8f; }
+  #qBox .sub { font-size:12px; font-weight:600; opacity:.8; margin-top:3px; }
+  #grid { margin-top:10px; background:rgba(11,35,64,0.92); border-radius:14px; padding:8px; display:grid; gap:2px; pointer-events:auto; touch-action:manipulation; }
+  .ch { display:flex; align-items:center; justify-content:center; color:#fff; font-family:Arial,Helvetica,sans-serif; font-weight:700; border-radius:6px; user-select:none; }
+  .ch.ng { background:rgba(255,90,90,.45); }
+  #resultBadge { position:fixed; bottom:calc(max(20px, env(safe-area-inset-bottom)) + 52px); left:0; width:100%; z-index:31; text-align:center; pointer-events:none; display:none; }
+  #resultBadge .badge { display:inline-block; background: rgba(0,0,0,0.6); border:2px solid rgba(255,255,255,0.65); border-radius:22px; padding:8px 18px; font-size:14px; font-weight:700; color:#fff; }
+  @media (max-height:640px){ #qBox .q{font-size:12px;} #qBox .sub{font-size:11px;} }
+  #clearScreen { position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(11, 74, 143, 0.94); z-index:40; display:none; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:26px; backdrop-filter: blur(4px); pointer-events:auto; }
+  #clearScreen.show { display:flex; animation: fadeIn 0.5s ease; }
+  #clearScreen .stamp { width:120px; height:120px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:52px; margin-bottom:18px; animation: pop 0.5s cubic-bezier(.34,1.56,.64,1); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+  #clearScreen h2 { font-size:24px; margin-bottom:10px; font-weight:800; }
+  #clearScreen p { font-size:14px; opacity:0.95; max-width:320px; line-height:1.9; }
+  #clearScreen .score { margin-top:14px; font-size:15px; font-weight:800; background:rgba(255,255,255,0.18); padding:8px 18px; border-radius:16px; }
+  @keyframes pop { 0%{transform:scale(0);} 80%{transform:scale(1.15);} 100%{transform:scale(1);} }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+  html, body { touch-action: none; overscroll-behavior: none; }
+  @supports (height: 100dvh) { html, body, a-scene, #gameLayer, #clearScreen { height: 100dvh; } video { height: 100dvh !important; } }
+  @media (max-width:360px), (max-height:640px) {
+    #mistakeBadge { font-size:11px; padding:4px 9px; }
+  }
+  #rotateMsg { position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; background:#0b4a8f; color:#fff; font-size:18px; font-weight:800; text-align:center; padding:20px; line-height:1.8; }
+  @media (orientation:landscape) and (max-height:500px) { #rotateMsg { display:flex; } }
+  #exBtn { position:fixed; bottom:max(20px, env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); z-index:33; display:none; background:#ffd66b; color:#0b2037; border:none; border-radius:24px; padding:9px 22px; font-size:14px; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,.35); pointer-events:auto; }
+  #exModal { position:fixed; inset:0; z-index:45; background:rgba(11,35,64,.92); display:none; align-items:center; justify-content:center; padding:18px; pointer-events:auto; }
+  #exModal.show { display:flex; }
+  #exModal .card2 { background:#fff; color:#1f2a3a; border-radius:16px; padding:16px 14px; width:100%; max-width:400px; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+  #exModal h3 { font-size:16px; color:#0b4a8f; margin-bottom:8px; }
+  #exModal table { width:100%; border-collapse:collapse; text-align:center; font-size:18px; font-weight:800; margin:8px 0; }
+  #exModal th { font-size:11px; font-weight:700; text-align:left; width:30%; color:#38506b; padding:6px 4px; }
+  #exModal td { padding:7px 2px; }
+  #exModal tr.bin td { background:#dbe7f5; font-family:Consolas,Menlo,monospace; } #exModal tr.w td { background:#e3f3e6; } #exModal tr.res td { background:#fff6c8; }
+  #exModal .pair { display:flex; justify-content:center; gap:28px; font-family:Arial,Helvetica,sans-serif; font-weight:700; font-size:64px; margin:6px 0; } #exModal .pair small { display:block; font-size:12px; text-align:center; font-family:inherit; color:#38506b; }
+  #exModal .note { font-size:13px; font-weight:600; line-height:1.7; margin-top:6px; }
+  #exModal .close { display:block; margin:12px auto 0; background:#0b4a8f; color:#fff; border:none; border-radius:24px; padding:10px 32px; font-size:15px; font-weight:800; }
+</style>
+</head>
+<body>
+<div id="rotateMsg">📱 スマホを縦向きにしてください</div>
+<div id="ui"><h1>IVY大分 ARスタンプラリー</h1><p>スポット9 / 9 ・ 間違い探し</p></div>
+<div id="mistakeBadge">まちがい 0回</div>
+<div id="searchHint"><div class="badge">マーカーにカメラを向けてください<br><span style="font-size:12px;font-weight:500;opacity:.85">読み込みに時間がかかることがあります</span></div></div>
+
+<a-scene mindar-image="imageTargetSrc: ./sagasu.mind; autoStart: true; uiScanning: no;" color-space="sRGB"
+  renderer="colorManagement: true, physicallyCorrectLights, alpha: true" vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false">
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <a-entity id="target" mindar-image-target="targetIndex: 0"></a-entity>
+</a-scene>
+
+<div id="gameLayer">
+  <div id="panel">
+    <div class="box" id="qBox">
+      <div class="q">数字の<b>0(ゼロ)</b>が並ぶ中に、アルファベットの<b>O(オー)</b>が1つだけまぎれています。<br>見つけてタップしよう!</div>
+      <div class="sub">プログラムのバグは、こんな見まちがいから起きることもあります</div>
+    </div>
+    <div id="grid"></div>
+  </div>
+</div>
+<div id="resultBadge"><div class="badge" id="resultText"></div></div>
+<button id="exBtn">💡 ヒントを見る</button>
+<div id="exModal"><div class="card2">
+  <h3>0(ゼロ)と O(オー)の見分け方</h3>
+  <div class="pair"><div>0<small>ゼロ</small></div><div>O<small>オー</small></div></div>
+  <div class="note">・ <b>0(ゼロ)</b>は、<b>細長い</b>形です。<br>・ <b>O(オー)</b>は、<b>少し横に広い</b>丸い形です。<br>ひとつずつ見るより、<b>横に広い文字がないか</b>を探すと見つけやすいよ。</div>
+  <button class="close" id="exClose">とじる</button>
+</div></div>
+<div id="clearScreen"><div class="stamp">🔍</div><h2>見つけた!</h2><p id="clearText"></p><div class="score" id="scoreText"></div></div>
+
+<script>
+const STORE_KEY = 'ivyArStampMistakes';
+const SPOT_KEY = 'spot9';
+let memStore = {};
+function loadStore(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : {}; } catch(e){ return memStore; } }
+function saveStore(o){ memStore = o; try { localStorage.setItem(STORE_KEY, JSON.stringify(o)); } catch(e){} }
+if (/[?&]reset=1/.test(location.search)){ try { localStorage.removeItem(STORE_KEY); } catch(e){} memStore = {}; }
+function spotMistakes(){ return Number(loadStore()[SPOT_KEY]) || 0; }
+function totalMistakes(){ return Object.values(loadStore()).reduce((a,b)=> a + (Number(b)||0), 0); }
+function addMistake(){ const s = loadStore(); s[SPOT_KEY] = (Number(s[SPOT_KEY]) || 0) + 1; saveStore(s); updateBadge(); }
+function updateBadge(){ document.getElementById('mistakeBadge').textContent = 'まちがい 合計 ' + totalMistakes() + '回'; }
+updateBadge();
+
+const COLS = 8, ROWS = 9;
+const targetEntity = document.getElementById('target');
+const searchHint = document.getElementById('searchHint');
+const gameLayer = document.getElementById('gameLayer');
+const grid = document.getElementById('grid');
+const resultBadge = document.getElementById('resultBadge');
+const resultText = document.getElementById('resultText');
+const clearScreen = document.getElementById('clearScreen');
+const clearText = document.getElementById('clearText');
+const scoreText = document.getElementById('scoreText');
+let gameStarted = false, cleared = false;
+const wrong = new Set();
+function setResult(msg){ resultText.textContent = msg; resultBadge.style.display = 'block'; }
+
+function build(){
+  const avail = Math.min(window.innerWidth*0.92, 440) - 16;
+  const cw = Math.floor((avail - (COLS-1)*2) / COLS);
+  const ch = Math.max(30, Math.min(cw, Math.floor((window.innerHeight - 320) / ROWS) - 2));
+  grid.style.gridTemplateColumns = 'repeat(' + COLS + ',' + cw + 'px)';
+  grid.style.gridAutoRows = ch + 'px';
+  grid.style.width = 'fit-content'; grid.style.margin = '10px auto 0';
+  const odd = Math.floor(Math.random() * COLS * ROWS);
+  for (let i=0;i<COLS*ROWS;i++){
+    const el = document.createElement('div'); el.className = 'ch'; el.textContent = (i===odd ? 'O' : '0');
+    el.style.fontSize = Math.min(ch*0.72, 30) + 'px';
+    el.addEventListener('click', ()=>{
+      if (cleared) return;
+      if (i === odd){ cleared = true; el.style.background = '#59c98a'; setResult('見つけた!'); setTimeout(showClear, 600); }
+      else if (!wrong.has(i)){ wrong.add(i); el.classList.add('ng'); addMistake(); setResult('それは 0(ゼロ)です(このスポットのまちがい ' + spotMistakes() + '回)'); }
+    });
+    grid.appendChild(el);
+  }
+}
+document.getElementById('exBtn').addEventListener('click', ()=> document.getElementById('exModal').classList.add('show'));
+document.getElementById('exClose').addEventListener('click', ()=> document.getElementById('exModal').classList.remove('show'));
+function showClear(){
+  clearText.innerHTML = '数字の「0(ゼロ)」と、アルファベットの「O(オー)」は、とてもよく似ています。<br>プログラムでは、この見まちがいが原因で動かなくなる(バグ)ことがあります。<br>最後まで、おつかれさまでした!';
+  scoreText.textContent = 'このスポットのまちがい ' + spotMistakes() + '回 / 合計 ' + totalMistakes() + '回';
+  clearScreen.classList.add('show');
+}
+targetEntity.addEventListener('targetFound', ()=>{
+  searchHint.style.display='none';
+  if(!gameStarted){ gameStarted=true; gameLayer.style.display='block'; document.getElementById('exBtn').style.display='block'; build(); }
+});
+targetEntity.addEventListener('targetLost', ()=>{ if(!gameStarted) searchHint.style.display='block'; });
+</script>
+</body>
+</html>
