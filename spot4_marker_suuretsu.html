@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>スポット4 マーカーAR 数列</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
+  html, body { width:100%; height:100%; overflow:hidden; background: transparent !important;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif; }
+  a-scene { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; background: transparent !important; }
+  video { position: fixed !important; top:0 !important; left:0 !important; width:100% !important; height:100% !important; object-fit: cover !important; z-index:-1 !important; }
+  #ui { position:fixed; top:0; left:0; width:100%; z-index:20; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); background: linear-gradient(rgba(0,0,0,0.65), transparent); color:#fff; pointer-events:none; }
+  #ui h1 { font-size:14px; font-weight:700; } #ui p { font-size:12px; opacity:0.85; margin-top:2px; }
+  #mistakeBadge { position:fixed; top:max(10px, env(safe-area-inset-top)); right:12px; z-index:21; background:rgba(0,0,0,0.55); color:#fff; border:2px solid rgba(255,255,255,0.6); border-radius:18px; padding:5px 12px; font-size:12px; font-weight:700; pointer-events:none; backdrop-filter: blur(4px); }
+  #searchHint { position:fixed; bottom:0; left:0; width:100%; z-index:20; padding: 22px; padding-bottom: max(26px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(0,0,0,0.65)); color:#fff; text-align:center; pointer-events:none; }
+  #searchHint .badge { display:inline-block; background: rgba(0,0,0,0.4); border:2px solid rgba(255,255,255,0.6); border-radius:24px; padding:10px 22px; font-size:16px; font-weight:600; backdrop-filter: blur(6px); }
+  #gameLayer { position:fixed; top:0; left:0; width:100%; height:100%; z-index:30; display:none; pointer-events:none; }
+  #panel { position:absolute; top:max(54px, calc(env(safe-area-inset-top) + 44px)); left:50%; transform:translateX(-50%); width:92%; max-width:440px; pointer-events:none; }
+  .box { background:rgba(255,255,255,0.95); color:#1f2a3a; border-radius:14px; padding:10px 13px; box-shadow:0 6px 20px rgba(0,0,0,0.3); }
+  #qBox .q { font-size:14px; font-weight:800; line-height:1.65; } #qBox .q b { color:#0b4a8f; }
+  #qBox .sub { font-size:12px; font-weight:600; opacity:.75; margin-top:3px; }
+  #seq { margin-top:12px; display:flex; justify-content:space-between; align-items:flex-start; gap:4px; background:rgba(11,35,64,0.88); border-radius:14px; padding:12px 8px 8px; pointer-events:auto; }
+  .cellw { flex:1; display:flex; flex-direction:column; align-items:center; min-width:0; }
+  .shape { width:100%; max-width:50px; aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:900; color:#0b2037; touch-action:manipulation; }
+  .shape.s0 { background:#ffd66b; border-radius:50%; } .shape.s1 { background:#7fc0ff; border-radius:12px; }
+  .shape.s2 { background:#9fe0b4; border-radius:50%; } .shape.s3 { background:#ffb38f; border-radius:12px; }
+  .shape.s4 { background:#d7b8ff; border-radius:50%; }
+  .shape.q { background:transparent; border:3px dashed #fff; color:#fff; border-radius:12px; }
+  .gap { margin-top:7px; min-height:20px; font-size:12px; font-weight:900; color:#ffd66b; white-space:nowrap; }
+  #choices { margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:10px; pointer-events:auto; }
+  .choice { border:none; border-radius:12px; background:#fff; color:#0b4a8f; font-size:20px; font-weight:800; padding:13px 6px; box-shadow:0 4px 12px rgba(0,0,0,.3); }
+  .choice.ng { background:#b9c3d0; color:#6b7788; text-decoration:line-through; }
+  #resultBadge { position:fixed; bottom:max(24px, env(safe-area-inset-bottom)); left:0; width:100%; z-index:31; text-align:center; pointer-events:none; display:none; }
+  #resultBadge .badge { display:inline-block; background: rgba(0,0,0,0.6); border:2px solid rgba(255,255,255,0.65); border-radius:22px; padding:8px 18px; font-size:14px; font-weight:700; color:#fff; }
+  @media (max-height:640px){ #qBox .q{font-size:12.5px;} .choice{padding:10px 4px;font-size:18px;} }
+  #clearScreen { position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(11, 74, 143, 0.94); z-index:40; display:none; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:26px; backdrop-filter: blur(4px); pointer-events:auto; }
+  #clearScreen.show { display:flex; animation: fadeIn 0.5s ease; }
+  #clearScreen .stamp { width:120px; height:120px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:52px; margin-bottom:18px; animation: pop 0.5s cubic-bezier(.34,1.56,.64,1); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+  #clearScreen h2 { font-size:24px; margin-bottom:10px; font-weight:800; }
+  #clearScreen p { font-size:14px; opacity:0.95; max-width:320px; line-height:1.9; }
+  #clearScreen .score { margin-top:14px; font-size:15px; font-weight:800; background:rgba(255,255,255,0.18); padding:8px 18px; border-radius:16px; }
+  @keyframes pop { 0%{transform:scale(0);} 80%{transform:scale(1.15);} 100%{transform:scale(1);} }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+  html, body { touch-action: none; overscroll-behavior: none; }
+  @supports (height: 100dvh) { html, body, a-scene, #gameLayer, #clearScreen { height: 100dvh; } video { height: 100dvh !important; } }
+  @media (max-width:360px), (max-height:640px) {
+    #mistakeBadge { font-size:11px; padding:4px 9px; }
+  }
+  #rotateMsg { position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; background:#0b4a8f; color:#fff; font-size:18px; font-weight:800; text-align:center; padding:20px; line-height:1.8; }
+  @media (orientation:landscape) and (max-height:500px) { #rotateMsg { display:flex; } }
+</style>
+</head>
+<body>
+<div id="rotateMsg">📱 スマホを縦向きにしてください</div>
+<div id="ui"><h1>IVY大分 ARスタンプラリー</h1><p>スポット4 / 9 ・ 数列</p></div>
+<div id="mistakeBadge">まちがい 0回</div>
+<div id="searchHint"><div class="badge">マーカーにカメラを向けてください<br><span style="font-size:12px;font-weight:500;opacity:.85">読み込みに時間がかかることがあります</span></div></div>
+
+<a-scene mindar-image="imageTargetSrc: ./suuretsu.mind; autoStart: true; uiScanning: no;" color-space="sRGB"
+  renderer="colorManagement: true, physicallyCorrectLights, alpha: true" vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false">
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <a-entity id="target" mindar-image-target="targetIndex: 0"></a-entity>
+</a-scene>
+
+<div id="gameLayer">
+  <div id="panel">
+    <div class="box" id="qBox">
+      <div class="q">数字が、ある規則で並んでいます。<br><b>?</b> に入る数は?</div>
+      <div class="sub">図形をタップすると、次の数との「差」が見えるよ</div>
+    </div>
+    <div id="seq"></div>
+    <div id="choices"></div>
+  </div>
+</div>
+<div id="resultBadge"><div class="badge" id="resultText"></div></div>
+<div id="clearScreen"><div class="stamp">🔢</div><h2>正解!</h2><p id="clearText"></p><div class="score" id="scoreText"></div></div>
+
+<script>
+const STORE_KEY = 'ivyArStampMistakes';
+const SPOT_KEY = 'spot4';
+let memStore = {};
+function loadStore(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : {}; } catch(e){ return memStore; } }
+function saveStore(o){ memStore = o; try { localStorage.setItem(STORE_KEY, JSON.stringify(o)); } catch(e){} }
+if (/[?&]reset=1/.test(location.search)){ try { localStorage.removeItem(STORE_KEY); } catch(e){} memStore = {}; }
+function spotMistakes(){ return Number(loadStore()[SPOT_KEY]) || 0; }
+function totalMistakes(){ return Object.values(loadStore()).reduce((a,b)=> a + (Number(b)||0), 0); }
+function addMistake(){ const s = loadStore(); s[SPOT_KEY] = (Number(s[SPOT_KEY]) || 0) + 1; saveStore(s); updateBadge(); }
+function updateBadge(){ document.getElementById('mistakeBadge').textContent = 'まちがい 合計 ' + totalMistakes() + '回'; }
+updateBadge();
+
+const SEQ = [2, 5, 11, 23, 47];      // 次の差: 3, 6, 12, 24 (2倍ずつ) → 次の差は48
+const ANSWER = 95;
+const CHOICES = [71, 94, 95, 96];
+const targetEntity = document.getElementById('target');
+const searchHint = document.getElementById('searchHint');
+const gameLayer = document.getElementById('gameLayer');
+const seqEl = document.getElementById('seq');
+const choicesEl = document.getElementById('choices');
+const resultBadge = document.getElementById('resultBadge');
+const resultText = document.getElementById('resultText');
+const clearScreen = document.getElementById('clearScreen');
+const clearText = document.getElementById('clearText');
+const scoreText = document.getElementById('scoreText');
+let gameStarted = false, cleared = false;
+function setResult(msg){ resultText.textContent = msg; resultBadge.style.display = 'block'; }
+
+function build(){
+  SEQ.forEach((v,i)=>{
+    const w = document.createElement('div'); w.className = 'cellw';
+    const s = document.createElement('div'); s.className = 'shape s' + i; s.textContent = v;
+    const g = document.createElement('div'); g.className = 'gap';
+    s.addEventListener('click', ()=>{
+      const next = (i < SEQ.length-1) ? SEQ[i+1] : ANSWER;
+      if (i < SEQ.length-1) g.textContent = '→ +' + (next - v);
+      else g.textContent = '→ ?';
+    });
+    w.appendChild(s); w.appendChild(g); seqEl.appendChild(w);
+  });
+  const w = document.createElement('div'); w.className = 'cellw';
+  const q = document.createElement('div'); q.className = 'shape q'; q.textContent = '?';
+  w.appendChild(q); w.appendChild(Object.assign(document.createElement('div'), {className:'gap'})); seqEl.appendChild(w);
+  CHOICES.forEach(v=>{
+    const b = document.createElement('button'); b.className = 'choice'; b.textContent = v;
+    b.addEventListener('click', ()=>{
+      if (cleared || b.classList.contains('ng')) return;
+      if (v === ANSWER){ cleared = true; setResult('正解!'); setTimeout(showClear, 500); }
+      else { b.classList.add('ng'); addMistake(); setResult('ちがいます(このスポットのまちがい ' + spotMistakes() + '回)'); }
+    });
+    choicesEl.appendChild(b);
+  });
+}
+function showClear(){
+  clearText.innerHTML = '数の差は 3, 6, 12, 24 と、2倍ずつ増えています。<br>次の差は 48 なので、47 + 48 = 95。<br>(「2倍して1を足す」規則でも、47×2+1 = 95 です)<br>規則を見つけるときは、まず「差」を調べてみよう。';
+  scoreText.textContent = 'このスポットのまちがい ' + spotMistakes() + '回 / 合計 ' + totalMistakes() + '回';
+  clearScreen.classList.add('show');
+}
+targetEntity.addEventListener('targetFound', ()=>{
+  searchHint.style.display='none';
+  if(!gameStarted){ gameStarted=true; gameLayer.style.display='block'; build(); }
+});
+targetEntity.addEventListener('targetLost', ()=>{ if(!gameStarted) searchHint.style.display='block'; });
+</script>
+</body>
+</html>
