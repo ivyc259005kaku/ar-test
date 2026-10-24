@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>スポット2 マーカーAR 平均</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select:none; }
+  html, body { width:100%; height:100%; overflow:hidden; background: transparent !important;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif; }
+  a-scene { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; background: transparent !important; }
+  video { position: fixed !important; top:0 !important; left:0 !important; width:100% !important; height:100% !important; object-fit: cover !important; z-index:-1 !important; }
+  #ui { position:fixed; top:0; left:0; width:100%; z-index:20; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); background: linear-gradient(rgba(0,0,0,0.65), transparent); color:#fff; pointer-events:none; }
+  #ui h1 { font-size:14px; font-weight:700; } #ui p { font-size:12px; opacity:0.85; margin-top:2px; }
+  #mistakeBadge { position:fixed; top:max(10px, env(safe-area-inset-top)); right:12px; z-index:21; background:rgba(0,0,0,0.55); color:#fff; border:2px solid rgba(255,255,255,0.6); border-radius:18px; padding:5px 12px; font-size:12px; font-weight:700; pointer-events:none; backdrop-filter: blur(4px); }
+  #searchHint { position:fixed; bottom:0; left:0; width:100%; z-index:20; padding: 22px; padding-bottom: max(26px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(0,0,0,0.65)); color:#fff; text-align:center; pointer-events:none; }
+  #searchHint .badge { display:inline-block; background: rgba(0,0,0,0.4); border:2px solid rgba(255,255,255,0.6); border-radius:24px; padding:10px 22px; font-size:16px; font-weight:600; backdrop-filter: blur(6px); }
+  #gameLayer { position:fixed; top:0; left:0; width:100%; height:100%; z-index:30; display:none; pointer-events:none; }
+  #panel { position:absolute; top:max(54px, calc(env(safe-area-inset-top) + 44px)); left:50%; transform:translateX(-50%); width:92%; max-width:440px; pointer-events:none; }
+  #tableCard { position:relative; background:rgba(255,255,255,0.95); color:#1f2a3a; border-radius:14px; padding:10px 14px 8px; box-shadow:0 6px 20px rgba(0,0,0,0.3); overflow:hidden; }
+  #tableCard h3 { font-size:14px; color:#0b4a8f; margin-bottom:6px; }
+  #tableCard table { width:100%; border-collapse:collapse; font-size:16px; font-weight:700; }
+  #tableCard td { padding:5px 8px; border-bottom:1px solid #d5deea; } #tableCard td:last-child { text-align:right; }
+  #fog { position:absolute; left:0; top:0; width:100%; height:100%; touch-action:none; pointer-events:auto; transition:opacity .6s; }
+  #fogMsg { position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); text-align:center; font-weight:800; color:#38506b; font-size:15px; pointer-events:none; transition:opacity .4s; }
+  #qCard { margin-top:10px; background:rgba(255,255,255,0.95); color:#1f2a3a; border-radius:14px; padding:12px 14px; box-shadow:0 6px 20px rgba(0,0,0,0.3); display:none; pointer-events:auto; }
+  #qCard .q { font-size:15px; font-weight:800; color:#0b4a8f; margin-bottom:10px; }
+  #choices { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .choice { border:none; border-radius:12px; background:#0b4a8f; color:#fff; font-size:18px; font-weight:800; padding:14px 6px; }
+  .choice.ng { background:#b9c3d0; color:#6b7788; text-decoration:line-through; }
+  #resultBadge { position:fixed; bottom:max(24px, env(safe-area-inset-bottom)); left:0; width:100%; z-index:31; text-align:center; pointer-events:none; display:none; }
+  #resultBadge .badge { display:inline-block; background: rgba(0,0,0,0.6); border:2px solid rgba(255,255,255,0.65); border-radius:22px; padding:8px 18px; font-size:14px; font-weight:700; color:#fff; }
+  @media (max-height:640px){ #tableCard td{padding:3px 8px;font-size:14px;} #tableCard h3{font-size:12.5px;} .choice{padding:10px 4px;font-size:16px;} #qCard{padding:9px 12px;} }
+  #clearScreen { position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(11, 74, 143, 0.94); z-index:40; display:none; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:26px; backdrop-filter: blur(4px); pointer-events:auto; }
+  #clearScreen.show { display:flex; animation: fadeIn 0.5s ease; }
+  #clearScreen .stamp { width:120px; height:120px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:52px; margin-bottom:18px; animation: pop 0.5s cubic-bezier(.34,1.56,.64,1); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+  #clearScreen h2 { font-size:24px; margin-bottom:10px; font-weight:800; }
+  #clearScreen p { font-size:14px; opacity:0.95; max-width:320px; line-height:1.9; }
+  #clearScreen .score { margin-top:14px; font-size:15px; font-weight:800; background:rgba(255,255,255,0.18); padding:8px 18px; border-radius:16px; }
+  @keyframes pop { 0%{transform:scale(0);} 80%{transform:scale(1.15);} 100%{transform:scale(1);} }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+
+  html, body { touch-action: none; overscroll-behavior: none; }
+  @supports (height: 100dvh) { html, body, a-scene, #gameLayer, #clearScreen { height: 100dvh; } video { height: 100dvh !important; } }
+  @media (max-width:360px), (max-height:640px) {
+    #mistakeBadge { font-size:11px; padding:4px 9px; }
+  }
+  #rotateMsg { position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; background:#0b4a8f; color:#fff; font-size:18px; font-weight:800; text-align:center; padding:20px; line-height:1.8; }
+  @media (orientation:landscape) and (max-height:500px) { #rotateMsg { display:flex; } }
+</style>
+</head>
+<body>
+<div id="rotateMsg">📱 スマホを縦向きにしてください</div>
+<div id="ui"><h1>IVY大分 ARスタンプラリー</h1><p>スポット2 / 9 ・ 平均</p></div>
+<div id="mistakeBadge">まちがい 0回</div>
+<div id="searchHint"><div class="badge">マーカーにカメラを向けてください<br><span style="font-size:12px;font-weight:500;opacity:.85">読み込みに時間がかかることがあります</span></div></div>
+
+<a-scene mindar-image="imageTargetSrc: ./heikin.mind; autoStart: true; uiScanning: no;" color-space="sRGB"
+  renderer="colorManagement: true, physicallyCorrectLights, alpha: true" vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false">
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <a-entity id="target" mindar-image-target="targetIndex: 0"></a-entity>
+</a-scene>
+
+<div id="gameLayer">
+  <div id="panel">
+    <div id="tableCard">
+      <h3>IT実習室の利用者数(月〜金)</h3>
+      <table>
+        <tr><td>月曜日</td><td>24人</td></tr>
+        <tr><td>火曜日</td><td>30人</td></tr>
+        <tr><td>水曜日</td><td>18人</td></tr>
+        <tr><td>木曜日</td><td>36人</td></tr>
+        <tr><td>金曜日</td><td>42人</td></tr>
+      </table>
+      <canvas id="fog"></canvas>
+      <div id="fogMsg">🌫️ 指でこすって、霧をはらおう</div>
+    </div>
+    <div id="qCard">
+      <div class="q">1日あたりの平均利用者数は何人?</div>
+      <div id="choices"></div>
+    </div>
+  </div>
+</div>
+<div id="resultBadge"><div class="badge" id="resultText"></div></div>
+<div id="clearScreen"><div class="stamp">📊</div><h2>正解!</h2><p id="clearText"></p><div class="score" id="scoreText"></div></div>
+
+<script>
+const STORE_KEY = 'ivyArStampMistakes';
+const SPOT_KEY = 'spot2';
+let memStore = {};
+function loadStore(){ try { const s = localStorage.getItem(STORE_KEY); return s ? JSON.parse(s) : {}; } catch(e){ return memStore; } }
+function saveStore(o){ memStore = o; try { localStorage.setItem(STORE_KEY, JSON.stringify(o)); } catch(e){} }
+if (/[?&]reset=1/.test(location.search)){ try { localStorage.removeItem(STORE_KEY); } catch(e){} memStore = {}; }
+function spotMistakes(){ return Number(loadStore()[SPOT_KEY]) || 0; }
+function totalMistakes(){ return Object.values(loadStore()).reduce((a,b)=> a + (Number(b)||0), 0); }
+function addMistake(){ const s = loadStore(); s[SPOT_KEY] = (Number(s[SPOT_KEY]) || 0) + 1; saveStore(s); updateBadge(); }
+function updateBadge(){ document.getElementById('mistakeBadge').textContent = 'まちがい 合計 ' + totalMistakes() + '回'; }
+updateBadge();
+
+const ANSWER = 30; // (24+30+18+36+42)/5
+const CHOICES = [27, 30, 33, 36];
+const targetEntity = document.getElementById('target');
+const searchHint = document.getElementById('searchHint');
+const gameLayer = document.getElementById('gameLayer');
+const fog = document.getElementById('fog'), fctx = fog.getContext('2d');
+const fogMsg = document.getElementById('fogMsg');
+const tableCard = document.getElementById('tableCard');
+const qCard = document.getElementById('qCard');
+const choicesEl = document.getElementById('choices');
+const resultBadge = document.getElementById('resultBadge');
+const resultText = document.getElementById('resultText');
+const clearScreen = document.getElementById('clearScreen');
+const clearText = document.getElementById('clearText');
+const scoreText = document.getElementById('scoreText');
+let gameStarted = false, revealed = false, cleared = false;
+let cw = 0, ch = 0, cell = 14, cols = 0, rows = 0, touched = null, touchedCount = 0;
+
+function setResult(msg){ resultText.textContent = msg; resultBadge.style.display = 'block'; }
+
+function drawFog(){
+  const r = tableCard.getBoundingClientRect();
+  cw = Math.round(r.width); ch = Math.round(r.height);
+  fog.width = cw; fog.height = ch;
+  const g = fctx.createLinearGradient(0,0,0,ch);
+  g.addColorStop(0,'#dfe7ef'); g.addColorStop(1,'#c3cfdb');
+  fctx.globalCompositeOperation = 'source-over';
+  fctx.fillStyle = g; fctx.fillRect(0,0,cw,ch);
+  fctx.fillStyle = 'rgba(255,255,255,0.45)';
+  for (let i=0;i<14;i++){ fctx.beginPath(); fctx.arc(Math.random()*cw, Math.random()*ch, 20+Math.random()*34, 0, Math.PI*2); fctx.fill(); }
+  cols = Math.ceil(cw/cell); rows = Math.ceil(ch/cell);
+  touched = new Uint8Array(cols*rows); touchedCount = 0;
+}
+function erase(x,y){
+  fctx.globalCompositeOperation = 'destination-out';
+  fctx.beginPath(); fctx.arc(x,y,26,0,Math.PI*2); fctx.fill();
+  const x0=Math.max(0,Math.floor((x-24)/cell)), x1=Math.min(cols-1,Math.floor((x+24)/cell));
+  const y0=Math.max(0,Math.floor((y-24)/cell)), y1=Math.min(rows-1,Math.floor((y+24)/cell));
+  for (let j=y0;j<=y1;j++) for (let i=x0;i<=x1;i++){ const k=j*cols+i; if(!touched[k]){ touched[k]=1; touchedCount++; } }
+  if (!revealed && touchedCount/(cols*rows) > 0.6) reveal();
+}
+function reveal(){
+  revealed = true;
+  fog.style.opacity = 0; fog.style.pointerEvents = 'none'; fogMsg.style.opacity = 0;
+  qCard.style.display = 'block';
+}
+let down = false;
+function pos(e){ const r = fog.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; }
+fog.addEventListener('pointerdown', e=>{ down = true; try{ fog.setPointerCapture(e.pointerId); }catch(err){} const p=pos(e); erase(p.x,p.y); });
+fog.addEventListener('pointermove', e=>{ if(!down) return; const p=pos(e); erase(p.x,p.y); });
+['pointerup','pointercancel'].forEach(ev=> fog.addEventListener(ev, ()=>{ down=false; }));
+
+function buildChoices(){
+  CHOICES.forEach(v=>{
+    const b = document.createElement('button'); b.className='choice'; b.textContent = v + '人';
+    b.addEventListener('click', ()=>{
+      if (cleared || b.classList.contains('ng')) return;
+      if (v === ANSWER){ cleared = true; setResult('正解!'); setTimeout(showClear, 500); }
+      else { b.classList.add('ng'); addMistake(); setResult('ちがいます(このスポットのまちがい ' + spotMistakes() + '回)'); }
+    });
+    choicesEl.appendChild(b);
+  });
+}
+function showClear(){
+  clearText.innerHTML = '平均 = 合計 ÷ 個数 です。<br>(24+30+18+36+42) ÷ 5 = 150 ÷ 5 = 30人<br>データが多いときも、同じ考え方で求められます。';
+  scoreText.textContent = 'このスポットのまちがい ' + spotMistakes() + '回 / 合計 ' + totalMistakes() + '回';
+  clearScreen.classList.add('show');
+}
+window.addEventListener('resize', ()=>{ if(gameStarted && !revealed) drawFog(); });
+targetEntity.addEventListener('targetFound', ()=>{
+  searchHint.style.display='none';
+  if(!gameStarted){ gameStarted=true; gameLayer.style.display='block'; buildChoices(); setTimeout(drawFog, 50); }
+});
+targetEntity.addEventListener('targetLost', ()=>{ if(!gameStarted) searchHint.style.display='block'; });
+</script>
+</body>
+</html>
