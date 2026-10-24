@@ -54,6 +54,20 @@
   }
   #rotateMsg { position:fixed; inset:0; z-index:90; display:none; align-items:center; justify-content:center; background:#0b4a8f; color:#fff; font-size:18px; font-weight:800; text-align:center; padding:20px; line-height:1.8; }
   @media (orientation:landscape) and (max-height:500px) { #rotateMsg { display:flex; } }
+  #exBtn { position:fixed; bottom:max(24px, env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); z-index:33; display:none; background:#ffd66b; color:#0b2037; border:none; border-radius:24px; padding:9px 22px; font-size:14px; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,.35); pointer-events:auto; }
+  #exModal { position:fixed; inset:0; z-index:45; background:rgba(11,35,64,.92); display:none; align-items:center; justify-content:center; padding:18px; pointer-events:auto; }
+  #exModal.show { display:flex; }
+  #exModal .card2 { background:#fff; color:#1f2a3a; border-radius:16px; padding:16px 14px; width:100%; max-width:400px; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+  #exModal h3 { font-size:16px; color:#0b4a8f; margin-bottom:8px; }
+  #exModal table { width:100%; border-collapse:collapse; text-align:center; font-size:18px; font-weight:800; margin:8px 0; }
+  #exModal th { font-size:11px; font-weight:700; text-align:left; width:30%; color:#38506b; padding:6px 4px; }
+  #exModal td { padding:7px 2px; }
+  #exModal tr.bin td { background:#dbe7f5; font-family:Consolas,Menlo,monospace; } #exModal tr.w td { background:#e3f3e6; } #exModal tr.res td { background:#fff6c8; }
+  #exModal .note { font-size:13px; font-weight:600; line-height:1.7; margin-top:6px; }
+  #exModal .close { display:block; margin:12px auto 0; background:#0b4a8f; color:#fff; border:none; border-radius:24px; padding:10px 32px; font-size:15px; font-weight:800; }
+  #exModal .step { margin-top:8px; background:#fff6c8; border-radius:10px; padding:8px 10px; font-size:13px; font-weight:700; line-height:1.6; }
+  #exModal .step.hidden { display:none; }
+  #exModal .more { display:block; margin:8px auto 0; background:#ffd66b; color:#0b2037; border:none; border-radius:20px; padding:8px 20px; font-size:13px; font-weight:800; }
 </style>
 </head>
 <body>
@@ -80,6 +94,15 @@
   </div>
 </div>
 <div id="resultBadge"><div class="badge" id="resultText"></div></div>
+<button id="exBtn">💡 ヒントを見る</button>
+<div id="exModal"><div class="card2">
+  <h3>ヒント</h3>
+  <div class="note"><b>例題:</b> 2, 3, 5, 8, 12, ? に入る数は?<br>となり同士の「差」を調べます。<br>3−2=1、5−3=2、8−5=3、12−8=4 … 差が 1, 2, 3, 4 と増えているので、次の差は 5。<br>12+5 = <b>17</b></div>
+  <div class="step" id="h1">① まず、図形をタップして「次の数との差」を全部見てみよう。</div>
+  <div class="step hidden" id="h2">② 差を横に並べて、その数の並びにも規則がないか探してみよう。</div>
+  <button class="more" id="moreBtn">さらにヒントを見る</button>
+  <button class="close" id="exClose">とじる</button>
+</div></div>
 <div id="clearScreen"><div class="stamp">🔢</div><h2>正解!</h2><p id="clearText"></p><div class="score" id="scoreText"></div></div>
 
 <script>
@@ -141,9 +164,12 @@ function showClear(){
   scoreText.textContent = 'このスポットのまちがい ' + spotMistakes() + '回 / 合計 ' + totalMistakes() + '回';
   clearScreen.classList.add('show');
 }
+document.getElementById('exBtn').addEventListener('click', ()=> document.getElementById('exModal').classList.add('show'));
+document.getElementById('exClose').addEventListener('click', ()=> document.getElementById('exModal').classList.remove('show'));
+document.getElementById('moreBtn').addEventListener('click', ()=>{ document.getElementById('h2').classList.remove('hidden'); document.getElementById('moreBtn').style.display='none'; });
 targetEntity.addEventListener('targetFound', ()=>{
   searchHint.style.display='none';
-  if(!gameStarted){ gameStarted=true; gameLayer.style.display='block'; build(); }
+  if(!gameStarted){ gameStarted=true; gameLayer.style.display='block'; document.getElementById('exBtn').style.display='block'; build(); }
 });
 targetEntity.addEventListener('targetLost', ()=>{ if(!gameStarted) searchHint.style.display='block'; });
 </script>
