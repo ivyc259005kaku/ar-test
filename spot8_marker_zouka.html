@@ -83,25 +83,29 @@
 <div id="gameLayer">
   <div id="panel">
     <div class="box" id="qBox">
-      <div class="q">CADソフトの利用者が、昨年の<b>200人</b>から、今年は<b>250人</b>に増えました。<br>昨年を100%とすると、何%増えた?</div>
-      <div class="sub">緑の棒(増えた50人)の長さに、黄色が届くまでスライダーを動かそう</div>
+      <div class="q">CADソフトの利用者は、昨年が<b>200人</b>、今年が<b>250人</b>でした。来年は<b>300人</b>になる予想です。<br><b>今年(250人)を100%</b>とすると、来年は何%増える?</div>
+      <div class="sub">スライダーで%を動かすと、「何人になるか」が出るよ。300人になる%に合わせよう</div>
     </div>
     <div id="chart">
-      <div class="lab">昨年 200人(=100%)</div>
-      <div class="barwrap"><div class="bar" id="b1"></div><div class="bar" id="fill"></div><div class="ticks"></div></div>
-      <div class="lab">増えた分 50人(250 − 200)</div>
-      <div class="barwrap"><div class="bar" id="b2"></div></div>
-      <input type="range" id="sl" min="0" max="100" step="5" value="0">
+      <div class="lab">昨年 200人</div>
+      <div class="barwrap"><div class="bar" style="width:66.7%;background:#4f8fd6"></div></div>
+      <div class="lab">今年 250人 ← 基準(100%)</div>
+      <div class="barwrap"><div class="bar" style="width:83.3%;background:#59c98a"></div></div>
+      <div class="lab">来年 300人(予想)</div>
+      <div class="barwrap"><div class="bar" style="width:100%;background:#ffb38f"></div></div>
+      <input type="range" id="sl" min="0" max="50" step="5" value="0">
       <div id="pct">0%</div>
+      <div id="calc" style="text-align:center;font-size:13px;font-weight:800;color:#fff">250人の 0% 増し → 250人</div>
     </div>
     <button id="decide">これで決定</button>
   </div>
 </div>
 <div id="resultBadge"><div class="badge" id="resultText"></div></div>
-<button id="exBtn">💡 例題を見る</button>
+<button id="exBtn">💡 ヒントを見る</button>
 <div id="exModal"><div class="card2">
-  <h3>例題: 100人が120人に増えたら?</h3>
-  <div class="note">① 増えた人数を求める<br>　120 − 100 = <b>20人</b><br>② もとの人数(100人)を100%として、割合にする<br>　20 ÷ 100 × 100 = <b>20%</b><br><br><b>増加率 = 増えた数 ÷ もとの数 × 100(%)</b></div>
+  <h3>ヒント: 「基準」を決めよう</h3>
+  <div class="note"><b>増加率 = 増えた数 ÷ 基準の数 × 100(%)</b><br>「〜を100%とすると」と書いてある数が<b>基準</b>です。<br><br><b>例題:</b> 昨年100人 → 今年120人 → 来年150人。<br>今年(120人)を100%とすると、来年は何%増える?<br>増えた数: 150−120=30人<br>基準は今年の120人なので、30÷120×100=<b>25%</b><br>(昨年の100人を基準にした 50% ではありません)</div>
+  <div class="step" id="h1" style="margin-top:8px;background:#fff6c8;border-radius:10px;padding:8px 10px;font-size:13px;font-weight:700;line-height:1.6">この問題の基準は「今年の250人」です。来年は300人なので、増える数は何人かな?</div>
   <button class="close" id="exClose">とじる</button>
 </div></div>
 <div id="clearScreen"><div class="stamp">📈</div><h2>正解!</h2><p id="clearText"></p><div class="score" id="scoreText"></div></div>
@@ -119,12 +123,12 @@ function addMistake(){ const s = loadStore(); s[SPOT_KEY] = (Number(s[SPOT_KEY])
 function updateBadge(){ document.getElementById('mistakeBadge').textContent = 'まちがい 合計 ' + totalMistakes() + '回'; }
 updateBadge();
 
-const BEFORE = 200, AFTER = 250;
-const ANSWER = Math.round((AFTER - BEFORE) / BEFORE * 100);   // 25
+const BASE = 250, NEXT = 300;
+const ANSWER = Math.round((NEXT - BASE) / BASE * 100);   // 20
 const targetEntity = document.getElementById('target');
 const searchHint = document.getElementById('searchHint');
 const gameLayer = document.getElementById('gameLayer');
-const sl = document.getElementById('sl'), fill = document.getElementById('fill'), pct = document.getElementById('pct');
+const sl = document.getElementById('sl'), pct = document.getElementById('pct'), calc = document.getElementById('calc');
 const resultBadge = document.getElementById('resultBadge');
 const resultText = document.getElementById('resultText');
 const clearScreen = document.getElementById('clearScreen');
@@ -132,19 +136,19 @@ const clearText = document.getElementById('clearText');
 const scoreText = document.getElementById('scoreText');
 let gameStarted = false, cleared = false, lastTried = -1;
 function setResult(msg){ resultText.textContent = msg; resultBadge.style.display = 'block'; }
-sl.addEventListener('input', ()=>{ fill.style.width = sl.value + '%'; pct.textContent = sl.value + '%'; });
+sl.addEventListener('input', ()=>{ const v = Number(sl.value); pct.textContent = v + '%'; calc.textContent = BASE + '人の ' + v + '% 増し → ' + (Math.round(BASE * (1 + v/100) * 10) / 10) + '人'; });
 document.getElementById('decide').addEventListener('click', ()=>{
   if (cleared) return;
   const v = Number(sl.value);
   if (v === ANSWER){ cleared = true; setResult('正解!'); setTimeout(showClear, 500); return; }
   if (v === lastTried){ setResult('さっきと同じ値です。考え直してみよう'); return; }
   lastTried = v; addMistake();
-  setResult('ちがうようです(このスポットのまちがい ' + spotMistakes() + '回)');
+  setResult(v === 25 ? '基準は「今年の250人」だよ(まちがい ' + spotMistakes() + '回)' : 'ちがうようです(このスポットのまちがい ' + spotMistakes() + '回)');
 });
 document.getElementById('exBtn').addEventListener('click', ()=> document.getElementById('exModal').classList.add('show'));
 document.getElementById('exClose').addEventListener('click', ()=> document.getElementById('exModal').classList.remove('show'));
 function showClear(){
-  clearText.innerHTML = '増えた人数 = 250 − 200 = 50人<br>増加率 = 50 ÷ 200 × 100 = 25%<br>「もとの数」を100%とした割合で考えるのがポイントです。<br>(250 ÷ 200 = 1.25 → 25%増え、と考えることもできます)';
+  clearText.innerHTML = '来年に増える人数 = 300 − 250 = 50人<br>基準は「今年の250人」なので、50 ÷ 250 × 100 = 20%<br>(200人を基準にした 25% ではありません)<br>基準が変わると、同じ50人でも割合は変わります。';
   scoreText.textContent = 'このスポットのまちがい ' + spotMistakes() + '回 / 合計 ' + totalMistakes() + '回';
   clearScreen.classList.add('show');
 }
