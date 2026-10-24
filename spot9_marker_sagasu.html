@@ -23,13 +23,13 @@
   #panel { position:absolute; top:max(54px, calc(env(safe-area-inset-top) + 44px)); left:50%; transform:translateX(-50%); width:92%; max-width:440px; pointer-events:none; }
   .box { background:rgba(255,255,255,0.95); color:#1f2a3a; border-radius:14px; padding:10px 13px; box-shadow:0 6px 20px rgba(0,0,0,0.3); }
   #qBox .q { font-size:13.5px; font-weight:800; line-height:1.65; } #qBox .q b { color:#0b4a8f; }
-  #qBox .sub { font-size:12px; font-weight:600; opacity:.8; margin-top:3px; }
+  #qBox .sub { font-size:13px; font-weight:800; color:#0b4a8f; margin-top:3px; }
   #grid { margin-top:10px; background:rgba(11,35,64,0.92); border-radius:14px; padding:8px; display:grid; gap:2px; pointer-events:auto; touch-action:manipulation; }
   .ch { display:flex; align-items:center; justify-content:center; color:#fff; font-family:Arial,Helvetica,sans-serif; font-weight:700; border-radius:6px; user-select:none; }
   .ch.ng { background:rgba(255,90,90,.45); }
   #resultBadge { position:fixed; bottom:calc(max(20px, env(safe-area-inset-bottom)) + 52px); left:0; width:100%; z-index:31; text-align:center; pointer-events:none; display:none; }
   #resultBadge .badge { display:inline-block; background: rgba(0,0,0,0.6); border:2px solid rgba(255,255,255,0.65); border-radius:22px; padding:8px 18px; font-size:14px; font-weight:700; color:#fff; }
-  @media (max-height:640px){ #qBox .q{font-size:12px;} #qBox .sub{font-size:11px;} }
+  @media (max-height:640px){ #qBox .q{font-size:12px;line-height:1.5;} #qBox .sub{font-size:12px;} #qBox{padding:7px 11px;} }
   #clearScreen { position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(11, 74, 143, 0.94); z-index:40; display:none; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:26px; backdrop-filter: blur(4px); pointer-events:auto; }
   #clearScreen.show { display:flex; animation: fadeIn 0.5s ease; }
   #clearScreen .stamp { width:120px; height:120px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:52px; margin-bottom:18px; animation: pop 0.5s cubic-bezier(.34,1.56,.64,1); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
@@ -55,7 +55,7 @@
   #exModal th { font-size:11px; font-weight:700; text-align:left; width:30%; color:#38506b; padding:6px 4px; }
   #exModal td { padding:7px 2px; }
   #exModal tr.bin td { background:#dbe7f5; font-family:Consolas,Menlo,monospace; } #exModal tr.w td { background:#e3f3e6; } #exModal tr.res td { background:#fff6c8; }
-  #exModal .pair { display:flex; justify-content:center; gap:28px; font-family:Arial,Helvetica,sans-serif; font-weight:700; font-size:64px; margin:6px 0; } #exModal .pair small { display:block; font-size:12px; text-align:center; font-family:inherit; color:#38506b; }
+  #exModal .pair { display:flex; justify-content:center; gap:18px; font-family:Arial,Helvetica,sans-serif; font-weight:700; font-size:52px; margin:6px 0; } #exModal .pair small { display:block; font-size:12px; text-align:center; font-family:inherit; color:#38506b; }
   #exModal .note { font-size:13px; font-weight:600; line-height:1.7; margin-top:6px; }
   #exModal .close { display:block; margin:12px auto 0; background:#0b4a8f; color:#fff; border:none; border-radius:24px; padding:10px 32px; font-size:15px; font-weight:800; }
 </style>
@@ -76,8 +76,8 @@
 <div id="gameLayer">
   <div id="panel">
     <div class="box" id="qBox">
-      <div class="q">数字の<b>0(ゼロ)</b>が並ぶ中に、アルファベットの<b>O(オー)</b>が1つだけまぎれています。<br>見つけてタップしよう!</div>
-      <div class="sub">プログラムのバグは、こんな見まちがいから起きることもあります</div>
+      <div class="q">数字の<b>0と1</b>が並ぶ中に、アルファベットの<b>O(オー)</b>と<b>I(アイ)</b>が<b>3つずつ</b>まぎれています。全部見つけてタップしよう!</div>
+      <div class="sub" id="prog">見つけた数  O: 0/3  ・  I: 0/3</div>
     </div>
     <div id="grid"></div>
   </div>
@@ -85,12 +85,12 @@
 <div id="resultBadge"><div class="badge" id="resultText"></div></div>
 <button id="exBtn">💡 ヒントを見る</button>
 <div id="exModal"><div class="card2">
-  <h3>0(ゼロ)と O(オー)の見分け方</h3>
-  <div class="pair"><div>0<small>ゼロ</small></div><div>O<small>オー</small></div></div>
-  <div class="note">・ <b>0(ゼロ)</b>は、<b>細長い</b>形です。<br>・ <b>O(オー)</b>は、<b>少し横に広い</b>丸い形です。<br>ひとつずつ見るより、<b>横に広い文字がないか</b>を探すと見つけやすいよ。</div>
+  <h3>見分け方のヒント</h3>
+  <div class="pair"><div>0<small>ゼロ</small></div><div>O<small>オー</small></div><div>1<small>いち</small></div><div>I<small>アイ</small></div></div>
+  <div class="note">・ <b>0</b>は細長く、<b>O</b>は少し横に広い丸い形です。<br>・ <b>1</b>は上に小さな「はね」があり、<b>I</b>は ただの<b>まっすぐな棒</b>です。<br>はねのない棒と、横に広い丸を探してみよう。</div>
   <button class="close" id="exClose">とじる</button>
 </div></div>
-<div id="clearScreen"><div class="stamp">🔍</div><h2>見つけた!</h2><p id="clearText"></p><div class="score" id="scoreText"></div></div>
+<div id="clearScreen"><div class="stamp">🔍</div><h2>全部見つけた!</h2><p id="clearText"></p><div class="score" id="scoreText"></div></div>
 
 <script>
 const STORE_KEY = 'ivyArStampMistakes';
@@ -105,7 +105,7 @@ function addMistake(){ const s = loadStore(); s[SPOT_KEY] = (Number(s[SPOT_KEY])
 function updateBadge(){ document.getElementById('mistakeBadge').textContent = 'まちがい 合計 ' + totalMistakes() + '回'; }
 updateBadge();
 
-const COLS = 8, ROWS = 9;
+const COLS = 10, ROWS = 10;
 const targetEntity = document.getElementById('target');
 const searchHint = document.getElementById('searchHint');
 const gameLayer = document.getElementById('gameLayer');
@@ -116,24 +116,38 @@ const clearScreen = document.getElementById('clearScreen');
 const clearText = document.getElementById('clearText');
 const scoreText = document.getElementById('scoreText');
 let gameStarted = false, cleared = false;
-const wrong = new Set();
+const wrong = new Set(), found = new Set();
+let foundO = 0, foundI = 0;
 function setResult(msg){ resultText.textContent = msg; resultBadge.style.display = 'block'; }
+function updateProg(){ document.getElementById('prog').textContent = '見つけた数  O: ' + foundO + '/3  ・  I: ' + foundI + '/3'; }
 
 function build(){
-  const avail = Math.min(window.innerWidth*0.92, 440) - 16;
-  const cw = Math.floor((avail - (COLS-1)*2) / COLS);
-  const ch = Math.max(30, Math.min(cw, Math.floor((window.innerHeight - 320) / ROWS) - 2));
+  const avail = Math.min(window.innerWidth*0.92, 440) - 12;
+  const cw = Math.floor((avail - (COLS-1)*1) / COLS);
+  const top = document.getElementById('qBox').getBoundingClientRect().bottom + 10;
+  const ch = Math.max(24, Math.min(cw, Math.floor((window.innerHeight - top - 30) / ROWS) - 1));
   grid.style.gridTemplateColumns = 'repeat(' + COLS + ',' + cw + 'px)';
-  grid.style.gridAutoRows = ch + 'px';
+  grid.style.gridAutoRows = ch + 'px'; grid.style.gap = '1px'; grid.style.padding = '6px';
   grid.style.width = 'fit-content'; grid.style.margin = '10px auto 0';
-  const odd = Math.floor(Math.random() * COLS * ROWS);
+  const idx = [];
+  while (idx.length < 6){ const r = Math.floor(Math.random() * COLS * ROWS); if (!idx.includes(r)) idx.push(r); }
+  const oddMap = {}; idx.forEach((v,k)=>{ oddMap[v] = (k < 3 ? 'O' : 'I'); });
   for (let i=0;i<COLS*ROWS;i++){
-    const el = document.createElement('div'); el.className = 'ch'; el.textContent = (i===odd ? 'O' : '0');
-    el.style.fontSize = Math.min(ch*0.72, 30) + 'px';
+    const el = document.createElement('div'); el.className = 'ch';
+    el.textContent = oddMap[i] || (Math.random() < 0.5 ? '0' : '1');
+    el.style.fontSize = Math.min(Math.min(cw,ch)*0.74, 24) + 'px';
     el.addEventListener('click', ()=>{
       if (cleared) return;
-      if (i === odd){ cleared = true; el.style.background = '#59c98a'; setResult('見つけた!'); setTimeout(showClear, 600); }
-      else if (!wrong.has(i)){ wrong.add(i); el.classList.add('ng'); addMistake(); setResult('それは 0(ゼロ)です(このスポットのまちがい ' + spotMistakes() + '回)'); }
+      if (oddMap[i]){
+        if (found.has(i)) return;
+        found.add(i); el.style.background = '#59c98a';
+        if (oddMap[i] === 'O') foundO++; else foundI++;
+        updateProg(); resultBadge.style.display = 'none';
+        if (foundO === 3 && foundI === 3){ cleared = true; setResult('全部見つけた!'); setTimeout(showClear, 600); }
+      } else if (!wrong.has(i)){
+        wrong.add(i); el.classList.add('ng'); addMistake();
+        setResult('それは「' + el.textContent + '」です(このスポットのまちがい ' + spotMistakes() + '回)');
+      }
     });
     grid.appendChild(el);
   }
@@ -141,7 +155,7 @@ function build(){
 document.getElementById('exBtn').addEventListener('click', ()=> document.getElementById('exModal').classList.add('show'));
 document.getElementById('exClose').addEventListener('click', ()=> document.getElementById('exModal').classList.remove('show'));
 function showClear(){
-  clearText.innerHTML = '数字の「0(ゼロ)」と、アルファベットの「O(オー)」は、とてもよく似ています。<br>プログラムでは、この見まちがいが原因で動かなくなる(バグ)ことがあります。<br>最後まで、おつかれさまでした!';
+  clearText.innerHTML = '数字の「0」「1」と、アルファベットの「O」「I」は、とてもよく似ています。<br>プログラムでは、この見まちがいが原因で動かなくなる(バグ)ことがあります。<br>最後まで、おつかれさまでした!';
   scoreText.textContent = 'このスポットのまちがい ' + spotMistakes() + '回 / 合計 ' + totalMistakes() + '回';
   clearScreen.classList.add('show');
 }
