@@ -76,14 +76,16 @@
 
 <div id="qBox">
   <div class="q">コンピュータは<b>2進数</b>(0と1)で数を表します。<br>4つの2進数カードを、同じ大きさの<b>10進数</b>の枠に置こう。</div>
-  <div class="sub">むずかしいときは、下の「例題を見る」を押してね</div>
+  <div class="sub">0=0、1=1 …… 次は 10=? むずかしいときは「例題を見る」を押してね</div>
 </div>
 <div id="gameLayer"></div>
 <div id="resultBadge"><div class="badge" id="resultText"></div></div>
 <button id="exBtn">💡 例題を見る</button>
 <button id="checkBtn">これで決定</button>
 <div id="exModal"><div class="card2">
-  <h3>例題: 2進数 1011 を10進数にすると?</h3>
+  <h3>2進数の基本</h3>
+  <div class="note">0 → 0、1 → 1、<b>10 → 2</b>、<b>11 → 3</b><br>1の次は「桁が上がって」10(イチゼロ)になります。<br>右から、<b>1・2・4・8</b> と2倍ずつ大きくなる位です。</div>
+  <h3 style="margin-top:10px">例題: 2進数 1011 を10進数にすると?</h3>
   <table>
     <tr class="bin"><th>2進数</th><td>1</td><td>0</td><td>1</td><td>1</td></tr>
     <tr class="w"><th>各桁の重み</th><td>8</td><td>4</td><td>2</td><td>1</td></tr>
@@ -108,8 +110,8 @@ function updateBadge(){ document.getElementById('mistakeBadge').textContent = '�
 updateBadge();
 
 // カード(2進数) と 正しい枠(10進数)
-const CARDS = [ {id:'c4', bin:'100', slot:0}, {id:'c5', bin:'101', slot:1}, {id:'c6', bin:'110', slot:2}, {id:'c9', bin:'1001', slot:3} ];
-const SLOT_NUMS = [4,5,6,9];
+const CARDS = [ {id:'c2', bin:'10', slot:0}, {id:'c3', bin:'11', slot:1}, {id:'c4', bin:'100', slot:2}, {id:'c5', bin:'101', slot:3} ];
+const SLOT_NUMS = [2,3,4,5];
 const targetEntity = document.getElementById('target');
 const searchHint = document.getElementById('searchHint');
 const gameLayer = document.getElementById('gameLayer');
@@ -184,7 +186,7 @@ checkBtn.addEventListener('click', ()=>{
   setResult('いま '+correct+'枚 合っています(このスポットのまちがい '+spotMistakes()+'回)');
 });
 function showClear(){
-  clearText.innerHTML='100 = 4、101 = 4+1 = 5、110 = 4+2 = 6、1001 = 8+1 = 9。<br>2進数は、右から 1・2・4・8… と、2倍ずつ大きくなる位で数えます。';
+  clearText.innerHTML='10 = 2、11 = 2+1 = 3、100 = 4、101 = 4+1 = 5。<br>2進数は、右から 1・2・4・8… と、2倍ずつ大きくなる位で数えます。<br>桁が1つ増えるたびに、2倍になります。';
   scoreText.textContent='このスポットのまちがい '+spotMistakes()+'回 / 合計 '+totalMistakes()+'回';
   clearScreen.classList.add('show');
 }
