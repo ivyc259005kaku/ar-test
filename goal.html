@@ -68,7 +68,7 @@
 
   <div class="note">景品は、この画面を係の人に見せてください。<br>画面のスクリーンショットでは受け付けません。</div>
   </div>
-<div id="camBar"><a id="camBtn" href="./index.html">📷 マーカーを読みに行く</a></div>
+<div id="camBar"><a id="camBtn" href="./index.html?auto=1">📷 マーカーを読みに行く</a></div>
 
 <script>
 // ===== 設定(本番前に変更してください) =====
@@ -123,7 +123,7 @@ document.getElementById('recvBtn').addEventListener('click', ()=>{
   try { localStorage.setItem('ivyArStampReceived', String(Date.now())); } catch(e){}
   m.textContent = '受け取り済みにしました'; showReceived();
 });
-if (/[?&]embed=1/.test(location.search)){
+if (/[?&]embed=1/.test(location.search) || window.parent !== window){
   document.getElementById('camBtn').addEventListener('click', e=>{ e.preventDefault(); parent.postMessage({type:'close'}, '*'); });
 }
 if (done < 9){
