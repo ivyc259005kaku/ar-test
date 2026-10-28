@@ -29,16 +29,16 @@
 </style>
 </head>
 <body>
-
+ 
 <div id="start">
   <h1>📍 IVY大分<br>ARスタンプラリー</h1>
   <p>このページを開いたままで OK。<br>あとは、校内の <b>マーカー(ポスター)</b> に<br>カメラを向けるだけで問題が出ます。</p>
   <button id="goBtn">カメラを起動してスタート</button>
   <p style="font-size:12px;opacity:.7">※ SafariまたはChromeで開いてください(LINE等のアプリ内ブラウザは不可)<br>※ 途中でページを閉じても、同じブラウザで開き直せば続きから</p>
 </div>
-
+ 
 <div id="err">カメラを使えませんでした。<br>SafariまたはChromeで開き、<br>カメラの許可をオンにしてください。<br><br>(LINEなどのアプリ内ブラウザでは動きません)</div>
-
+ 
 <a-scene id="scene" mindar-image="imageTargetSrc: ./all.mind; autoStart: false; uiScanning: no; uiLoading: no; filterMinCF: 0.001; filterBeta: 10;"
          color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
   <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -52,22 +52,23 @@
   <a-entity id="t7" mindar-image-target="targetIndex: 7"></a-entity>
   <a-entity id="t8" mindar-image-target="targetIndex: 8"></a-entity>
 </a-scene>
-
+ 
+<button id="playBtn" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:45;background:#ffd66b;color:#0b2037;border:none;border-radius:34px;font-size:20px;font-weight:900;padding:18px 34px">▶ タップしてカメラを開始</button>
 <div id="hint"><span>📷 マーカーにカメラを向けてください</span></div>
 <div id="bar"><span id="stamps">スタンプ 0 / 9</span><button id="goalBtn">📒 スタンプ帳</button></div>
 <iframe id="frame" allow="" title="spot"></iframe>
-
+ 
 <script>
 // マーカーの順番 = all.mind に入れた画像の順番(①〜⑨)
 const FILES = [
+  'spot3_marker_meiro.html', 'spot4_marker_suuretsu.html', 'spot5_marker_venn.html',
   'spot6_marker_binary.html', 'spot7_marker_godai.html', 'spot8_marker_zouka.html',
-  'spot9_marker_sagasu.html', 'spot1_marker_rack.html', 'spot2_marker_heikin.html',
-  'spot3_marker_meiro.html', 'spot4_marker_suuretsu.html', 'spot5_marker_venn.html'
+  'spot9_marker_sagasu.html', 'spot1_marker_rack.html', 'spot2_marker_heikin.html'
 ];
 const frame = document.getElementById('frame');
 const scene = document.getElementById('scene');
 let open = false;
-
+ 
 function clearedCount(){
   try { return Object.keys(JSON.parse(localStorage.getItem('ivyArStampCleared') || '{}')).length; } catch(e){ return 0; }
 }
@@ -100,6 +101,13 @@ async function startCamera(){
   try {
     const sys = scene.systems['mindar-image-system'];
     await sys.start();
+    const ensurePlay = ()=>{
+      const v = document.querySelector('video'); if (!v) return;
+      v.setAttribute('playsinline',''); v.muted = true;
+      if (v.paused){ v.play().then(()=>{ document.getElementById('playBtn').style.display='none'; }).catch(()=>{ document.getElementById('playBtn').style.display='block'; }); }
+    };
+    ensurePlay(); setTimeout(ensurePlay, 500); setTimeout(ensurePlay, 1500);
+    document.getElementById('playBtn').onclick = ()=>{ const v=document.querySelector('video'); if(v) v.play(); document.getElementById('playBtn').style.display='none'; };
     const fit = ()=> window.dispatchEvent(new Event('resize'));
     fit(); setTimeout(fit, 300); setTimeout(fit, 1000); window.addEventListener('orientationchange', ()=> setTimeout(fit, 300));
     try { sessionStorage.setItem('ivyArCam', '1'); } catch(e){}
