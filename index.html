@@ -39,7 +39,7 @@
 
 <div id="err">カメラを使えませんでした。<br>SafariまたはChromeで開き、<br>カメラの許可をオンにしてください。<br><br>(LINEなどのアプリ内ブラウザでは動きません)</div>
 
-<a-scene id="scene" mindar-image="imageTargetSrc: ./all.mind?v=20261029e; autoStart: false; uiScanning: no; uiLoading: no; filterMinCF: 0.001; filterBeta: 10;"
+<a-scene id="scene" mindar-image="imageTargetSrc: ./all.mind?v=20261029f; autoStart: false; uiScanning: no; uiLoading: no; filterMinCF: 0.001; filterBeta: 10;"
          color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
   <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
   <a-entity id="t0" mindar-image-target="targetIndex: 0"></a-entity>
@@ -61,9 +61,9 @@
 <script>
 // マーカーの順番 = all.mind に入れた画像の順番(①〜⑨)
 const FILES = [
-  'spot2_marker_heikin.html', 'spot3_marker_meiro.html', 'spot4_marker_suuretsu.html',
-  'spot5_marker_venn.html', 'spot6_marker_binary.html', 'spot7_marker_godai.html',
-  'spot8_marker_zouka.html', 'spot9_marker_sagasu.html', 'spot1_marker_rack.html'
+  'spot7_marker_godai.html', 'spot8_marker_zouka.html', 'spot9_marker_sagasu.html',
+  'spot1_marker_rack.html', 'spot2_marker_heikin.html', 'spot3_marker_meiro.html',
+  'spot4_marker_suuretsu.html', 'spot5_marker_venn.html', 'spot6_marker_binary.html'
 ];
 const frame = document.getElementById('frame');
 const scene = document.getElementById('scene');
