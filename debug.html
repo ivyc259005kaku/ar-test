@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>IVY大分 ARスタンプラリー</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html { background:#000; }
+  html, body { width:100%; height:100dvh; overflow:hidden; background:transparent; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif; }
+  a-scene { position:fixed; inset:0; background:transparent; }
+  video { position:fixed !important; top:0 !important; left:0 !important; right:0 !important; margin:0 !important; width:100vw !important; height:100dvh !important; max-width:none !important; object-fit:cover; z-index:-1; transform:none !important; }
+  .a-canvas { width:100vw !important; height:100dvh !important; }
+  #start { position:fixed; inset:0; z-index:50; background:#0b4a8f; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:24px; text-align:center; }
+  #start h1 { font-size:22px; font-weight:900; }
+  #start p { font-size:14px; line-height:1.8; opacity:.9; }
+  #start button { background:#ffd66b; color:#0b2037; border:none; border-radius:30px; font-size:18px; font-weight:900; padding:14px 38px; }
+  #bar { position:fixed; left:0; right:0; bottom:0; z-index:20; display:none; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); background:rgba(11,74,143,.88); color:#fff; font-weight:800; font-size:14px; }
+  #bar button { background:#ffd66b; color:#0b2037; border:none; border-radius:20px; font-weight:800; font-size:14px; padding:8px 16px; }
+  #hint { position:fixed; left:0; right:0; top:max(14px, env(safe-area-inset-top)); z-index:20; text-align:center; display:none; }
+  #hint span { display:inline-block; background:rgba(0,0,0,.55); color:#fff; font-size:13px; font-weight:700; padding:7px 16px; border-radius:18px; }
+  #frame { position:fixed; inset:0; width:100%; height:100%; border:0; z-index:40; display:none; background:transparent; }
+  #frame.goal { background:#0b4a8f; }
+  #err { position:fixed; inset:0; z-index:60; display:none; background:#0b4a8f; color:#fff; padding:30px; text-align:center; align-items:center; justify-content:center; font-size:15px; line-height:1.9; }
+</style>
+</head>
+<body>
+<div id="log" style="position:fixed;left:0;right:0;top:0;z-index:99;background:rgba(0,0,0,.78);color:#0f0;font:12px/1.5 monospace;padding:8px;white-space:pre-wrap;max-height:55vh;overflow:auto">診断ページ(debug.html)
+</div>
+<button id="goBtn" style="position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:99;font-size:18px;padding:14px 30px">カメラ開始</button>
+<a-scene id="scene" mindar-image="imageTargetSrc: ./all.mind?v=dbg1; autoStart: false; uiScanning: no; uiLoading: no; filterMinCF: 0.001; filterBeta: 10;"
+ color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights: true, alpha: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+<a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+<a-entity id="t0" mindar-image-target="targetIndex: 0"></a-entity>
+<a-entity id="t1" mindar-image-target="targetIndex: 1"></a-entity>
+<a-entity id="t2" mindar-image-target="targetIndex: 2"></a-entity>
+<a-entity id="t3" mindar-image-target="targetIndex: 3"></a-entity>
+<a-entity id="t4" mindar-image-target="targetIndex: 4"></a-entity>
+<a-entity id="t5" mindar-image-target="targetIndex: 5"></a-entity>
+<a-entity id="t6" mindar-image-target="targetIndex: 6"></a-entity>
+<a-entity id="t7" mindar-image-target="targetIndex: 7"></a-entity>
+<a-entity id="t8" mindar-image-target="targetIndex: 8"></a-entity>
+</a-scene>
+<script>
+const L=document.getElementById('log'); const log=t=>{L.textContent+=t+'\n'; L.scrollTop=L.scrollHeight;};
+log('UA: '+navigator.userAgent.slice(0,90));
+fetch('./all.mind?v='+Date.now()).then(async r=>{const b=await r.arrayBuffer(); log('all.mind: HTTP '+r.status+' / '+b.byteLength+' bytes / 更新 '+r.headers.get('last-modified'));}).catch(e=>log('all.mind 取得失敗: '+e));
+for(let i=0;i<9;i++){const e=document.getElementById('t'+i); e.addEventListener('targetFound',()=>log('★ 検出 targetIndex='+i)); e.addEventListener('targetLost',()=>log('  見失い '+i));}
+const sc=document.getElementById('scene');
+document.getElementById('goBtn').onclick=async()=>{try{log('カメラ起動中...'); await sc.systems['mindar-image-system'].start(); log('起動OK。マーカーを映してください'); window.dispatchEvent(new Event('resize'));}catch(e){log('起動失敗: '+e);}};
+</script>
+</body>
+</html>
